@@ -1,26 +1,324 @@
 <!doctype html>
+<!--
+  Design system:
+  - Type: Nunito (rounded, Cyrillic) — h1 2.25rem/800, tagline 1.1rem/700, body ~1rem/500, tags 0.8rem/700
+  - Background: warm cream #fdf3ea with two soft pastel glows (peach, mint)
+  - Surface: white card, radius 32px, one soft warm shadow
+  - Palette: text #6b5d52, heading #453a31, accent peach #ffb27d, pastel tag chips
+  - Rhythm: single centered card, generous vertical breathing room
+  - Motion: gentle bob + one-eye wink loop every ~4.5s, soft rise-in on load
+-->
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RI — веб-разработка</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      body {
-        font-family: system-ui, sans-serif;
-        max-width: 640px;
-        margin: 3rem auto;
-        padding: 0 1rem;
-        line-height: 1.6;
-        color: #1f2328;
+      :root {
+        --bg: #fdf3ea;
+        --card: #ffffff;
+        --ink: #6b5d52;
+        --ink-strong: #453a31;
+        --accent: #ffb27d;
+        --peach: #ffe3d1;
+        --blush: #ffe0ea;
+        --mint: #e3f0e7;
+        --lavender: #eae4ff;
+        --butter: #fff3c9;
       }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Nunito', 'Segoe UI', sans-serif;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 2rem 1rem;
+        color: var(--ink);
+        background: var(--bg);
+        overflow-x: hidden;
+      }
+
+      body::before,
+      body::after {
+        content: '';
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(70px);
+        z-index: 0;
+        pointer-events: none;
+      }
+
+      body::before {
+        width: 420px;
+        height: 420px;
+        top: -140px;
+        left: -120px;
+        background: rgba(255, 178, 125, 0.35);
+      }
+
+      body::after {
+        width: 460px;
+        height: 460px;
+        bottom: -170px;
+        right: -140px;
+        background: rgba(141, 224, 197, 0.3);
+      }
+
+      .branch {
+        position: fixed;
+        z-index: 0;
+        pointer-events: none;
+        opacity: 0.75;
+      }
+
+      .branch-a {
+        left: 0;
+        bottom: 0;
+        width: min(320px, 42vw);
+        transform-origin: bottom left;
+        animation: sway 7s ease-in-out infinite;
+      }
+
+      .branch-b {
+        right: 0;
+        top: 0;
+        width: min(320px, 42vw);
+        transform-origin: top right;
+        animation: sway 8s ease-in-out infinite reverse;
+      }
+
+      .card {
+        position: relative;
+        z-index: 1;
+        max-width: 460px;
+        width: 100%;
+        text-align: center;
+        background: var(--card);
+        border-radius: 32px;
+        padding: 3rem 2.5rem 2.75rem;
+        box-shadow: 0 24px 60px rgba(181, 141, 101, 0.14);
+        animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .ham {
+        width: 170px;
+        height: auto;
+        display: block;
+        margin: 0 auto 1.5rem;
+        animation: bob 3s ease-in-out infinite;
+      }
+
+      .ham-eye {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+
+      .ham-right-eye {
+        animation: wink 4.5s ease-in-out infinite;
+      }
+
       h1 {
-        color: #ffb6c1;
+        font-size: 2.25rem;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        color: var(--ink-strong);
+        margin-bottom: 0.6rem;
+      }
+
+      h1 span {
+        color: var(--accent);
+      }
+
+      .tagline {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--ink-strong);
+        margin-bottom: 0.9rem;
+        text-wrap: pretty;
+      }
+
+      .about {
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.7;
+        text-wrap: pretty;
+        margin-bottom: 1.75rem;
+      }
+
+      .tags {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .tags li {
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        padding: 0.4rem 0.95rem;
+        border-radius: 999px;
+        color: var(--ink-strong);
+      }
+
+      .tags li:nth-child(1) { background: var(--peach); }
+      .tags li:nth-child(2) { background: var(--blush); }
+      .tags li:nth-child(3) { background: var(--mint); }
+      .tags li:nth-child(4) { background: var(--lavender); }
+      .tags li:nth-child(5) { background: var(--butter); }
+
+      @keyframes bob {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+      }
+
+      @keyframes wink {
+        0%, 88%, 100% { transform: scaleY(1); }
+        92%, 96% { transform: scaleY(0.06); }
+      }
+
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(16px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+
+      @keyframes sway {
+        0%, 100% { transform: rotate(-1.4deg); }
+        50% { transform: rotate(1.4deg); }
+      }
+
+      @media (max-width: 480px) {
+        .card { padding: 2.25rem 1.5rem 2rem; border-radius: 24px; }
+        .ham { width: 140px; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .ham,
+        .ham-right-eye,
+        .branch-a,
+        .branch-b {
+          animation: none;
+        }
       }
     </style>
   </head>
   <body>
-    <h1>RI</h1>
-    <p>Привет! Меня зовут RI, и я учусь веб-разработке.</p>
-    <p>Сейчас я осваиваю HTML, CSS и JavaScript, а ещё интересуюсь современными инструментами вроде React и Vite. Постепенно собираю маленькие проекты, чтобы закреплять знания на практике.</p>
+    <svg class="branch branch-a" viewBox="0 0 320 320" aria-hidden="true">
+      <!-- stem -->
+      <path d="M -10 322 C 78 300, 130 250, 176 176 C 210 124, 250 96, 285 72" stroke="#e6c19a" stroke-width="5" fill="none" stroke-linecap="round" />
+      <path d="M 118 238 C 126 228, 140 230, 148 220" stroke="#e6c19a" stroke-width="4" fill="none" stroke-linecap="round" />
+      <!-- leaves -->
+      <ellipse cx="28" cy="293" rx="17" ry="7.5" transform="rotate(-38 28 293)" fill="#ffc9d4" />
+      <ellipse cx="40" cy="302" rx="17" ry="7.5" transform="rotate(18 40 302)" fill="#ffdbe4" />
+      <circle cx="48" cy="298" r="4.5" fill="#ffb7c7" />
+      <ellipse cx="78" cy="252" rx="17" ry="7.5" transform="rotate(-42 78 252)" fill="#ffc9d4" />
+      <ellipse cx="90" cy="264" rx="17" ry="7.5" transform="rotate(16 90 264)" fill="#ffdbe4" />
+      <circle cx="98" cy="259" r="4" fill="#ffb7c7" />
+      <ellipse cx="54" cy="266" rx="15" ry="7" transform="rotate(28 54 266)" fill="#ffcfda" />
+      <ellipse cx="64" cy="272" rx="15" ry="7" transform="rotate(55 64 272)" fill="#ffdbe4" />
+      <ellipse cx="146" cy="212" rx="14" ry="7" transform="rotate(70 146 212)" fill="#ffc9d4" />
+      <ellipse cx="125" cy="214" rx="17" ry="7.5" transform="rotate(-38 125 214)" fill="#ffdbe4" />
+      <ellipse cx="116" cy="226" rx="17" ry="7.5" transform="rotate(40 116 226)" fill="#ffc9d4" />
+      <circle cx="124" cy="229" r="4.5" fill="#ffb7c7" />
+      <ellipse cx="169" cy="172" rx="17" ry="7.5" transform="rotate(-40 169 172)" fill="#ffc9d4" />
+      <ellipse cx="181" cy="184" rx="17" ry="7.5" transform="rotate(18 181 184)" fill="#ffdbe4" />
+      <circle cx="188" cy="177" r="4" fill="#ffb7c7" />
+      <ellipse cx="209" cy="130" rx="17" ry="7.5" transform="rotate(-36 209 130)" fill="#ffdbe4" />
+      <ellipse cx="221" cy="142" rx="17" ry="7.5" transform="rotate(20 221 142)" fill="#ffc9d4" />
+      <circle cx="227" cy="135" r="4" fill="#ffb7c7" />
+    </svg>
+
+    <svg class="branch branch-b" viewBox="0 0 320 320" aria-hidden="true">
+      <!-- stem -->
+      <path d="M 322 -8 C 236 12, 196 84, 178 142 C 162 192, 142 234, 112 276 C 92 302, 78 316, 60 324" stroke="#dcc39f" stroke-width="5" fill="none" stroke-linecap="round" />
+      <path d="M 210 126 C 200 116, 190 118, 182 108" stroke="#dcc39f" stroke-width="4" fill="none" stroke-linecap="round" />
+      <!-- leaves -->
+      <ellipse cx="279" cy="64" rx="17" ry="7.5" transform="rotate(-35 279 64)" fill="#ffc9d4" />
+      <ellipse cx="288" cy="76" rx="17" ry="7.5" transform="rotate(18 288 76)" fill="#ffd9e2" />
+      <circle cx="294" cy="68" r="4" fill="#ffb7c7" />
+      <ellipse cx="239" cy="106" rx="17" ry="7.5" transform="rotate(-38 239 106)" fill="#ffd9e2" />
+      <ellipse cx="249" cy="118" rx="17" ry="7.5" transform="rotate(20 249 118)" fill="#ffc9d4" />
+      <circle cx="256" cy="111" r="4" fill="#ffb7c7" />
+      <ellipse cx="146" cy="146" rx="14" ry="7" transform="rotate(-70 146 146)" fill="#ffc9d4" />
+      <ellipse cx="197" cy="152" rx="17" ry="7.5" transform="rotate(-36 197 152)" fill="#ffc9d4" />
+      <ellipse cx="207" cy="164" rx="17" ry="7.5" transform="rotate(18 207 164)" fill="#ffd9e2" />
+      <circle cx="214" cy="157" r="4.5" fill="#ffb7c7" />
+      <ellipse cx="157" cy="198" rx="17" ry="7.5" transform="rotate(-40 157 198)" fill="#ffd9e2" />
+      <ellipse cx="167" cy="210" rx="17" ry="7.5" transform="rotate(16 167 210)" fill="#ffc9d4" />
+      <circle cx="174" cy="203" r="4" fill="#ffb7c7" />
+      <ellipse cx="115" cy="244" rx="17" ry="7.5" transform="rotate(-34 115 244)" fill="#ffc9d4" />
+      <ellipse cx="125" cy="256" rx="17" ry="7.5" transform="rotate(22 125 256)" fill="#ffd9e2" />
+      <circle cx="130" cy="249" r="4" fill="#ffb7c7" />
+      <ellipse cx="66" cy="294" rx="15" ry="7" transform="rotate(-28 66 294)" fill="#ffd9e2" />
+      <ellipse cx="76" cy="300" rx="15" ry="7" transform="rotate(-55 76 300)" fill="#ffcfda" />
+    </svg>
+
+    <main class="card">
+      <svg class="ham" viewBox="0 0 200 180" role="img" aria-label="Хомячок подмигивает">
+        <defs>
+          <radialGradient id="fur" cx="50%" cy="38%" r="75%">
+            <stop offset="0" stop-color="#f6cd9c" />
+            <stop offset="1" stop-color="#e6b284" />
+          </radialGradient>
+        </defs>
+        <!-- ears -->
+        <ellipse cx="45" cy="42" rx="24" ry="26" fill="#edd0a4" />
+        <ellipse cx="155" cy="42" rx="24" ry="26" fill="#edd0a4" />
+        <ellipse cx="45" cy="54" rx="13" ry="11" fill="#ffc9c4" />
+        <ellipse cx="155" cy="54" rx="13" ry="11" fill="#ffc9c4" />
+        <!-- body -->
+        <ellipse cx="100" cy="112" rx="74" ry="60" fill="url(#fur)" />
+        <!-- belly -->
+        <ellipse cx="100" cy="128" rx="44" ry="33" fill="#fdf1e4" />
+        <!-- blush -->
+        <ellipse cx="52" cy="114" rx="12" ry="8" fill="#ffd2cd" opacity="0.85" />
+        <ellipse cx="148" cy="114" rx="12" ry="8" fill="#ffd2cd" opacity="0.85" />
+        <!-- left eye (open) -->
+        <g class="ham-eye">
+          <circle cx="70" cy="88" r="7" fill="#5a4632" />
+          <circle cx="68" cy="85" r="2.4" fill="#ffffff" opacity="0.9" />
+        </g>
+        <!-- right eye (winks) -->
+        <g class="ham-eye ham-right-eye">
+          <circle cx="130" cy="88" r="7" fill="#5a4632" />
+          <circle cx="128" cy="85" r="2.4" fill="#ffffff" opacity="0.9" />
+        </g>
+        <!-- nose -->
+        <ellipse cx="100" cy="103" rx="4.5" ry="3.5" fill="#f2a49a" />
+        <!-- mouth -->
+        <path d="M 96 110 Q 100 114 104 110" stroke="#5a4632" stroke-width="2.2" fill="none" stroke-linecap="round" />
+        <!-- paws -->
+        <ellipse cx="78" cy="164" rx="12" ry="8" fill="#edd0a4" />
+        <ellipse cx="122" cy="164" rx="12" ry="8" fill="#edd0a4" />
+      </svg>
+
+      <h1>RI<span>.</span></h1>
+      <p class="tagline">Привет! Меня зовут RI, и я учусь веб-разработке.</p>
+      <p class="about">
+        Сейчас я осваиваю HTML, CSS и JavaScript, а ещё интересуюсь современными
+        инструментами вроде React и Vite. Постепенно собираю маленькие проекты,
+        чтобы закреплять знания на практике.
+      </p>
+      <ul class="tags" aria-label="Технологии, которые я изучаю">
+        <li>HTML</li>
+        <li>CSS</li>
+        <li>JavaScript</li>
+        <li>React</li>
+        <li>Vite</li>
+      </ul>
+    </main>
   </body>
 </html>
