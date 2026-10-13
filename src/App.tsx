@@ -1,96 +1,55 @@
-import { useState } from 'react';
-import { Canvas } from './components/Canvas';
-import { PropertiesPanel } from './components/PropertiesPanel';
-import { LayersPanel } from './components/LayersPanel';
-import { Toolbar } from './components/Toolbar';
-import { DEFAULT_TOOL } from './constants/tools';
-import { useHotkeys } from './hooks/useHotkeys';
-import { useShapes } from './hooks/useShapes';
-import { useViewport } from './hooks/useViewport';
-import { buildImageUrl, hasCyrillic, preloadImage, translateToEnglish } from './utils/aiImage';
-import type { Shape, Tool } from './types/shape';
-
-const STARTER_SHAPES: Shape[] = [
-  { id: 'starter-rect', kind: 'rectangle', x: -120, y: -64, width: 240, height: 128, fill: '#7c6cff' },
-  { id: 'starter-ellipse', kind: 'ellipse', x: -60, y: 96, width: 120, height: 120, fill: '#4da3ff' },
-];
+import { useCallback, useState } from 'react';
+import { TopNav } from './components/TopNav';
+import { WorksSection } from './components/WorksSection';
+import { ProposalsSection } from './components/ProposalsSection';
+import { CatsSection } from './components/CatsSection';
+import { CursorSection } from './components/CursorSection';
+import { Landing } from './components/Landing';
+import { buildTemplate } from './constants/templates';
+import { useCursor } from './hooks/useCursor';
+import { useProjects } from './hooks/useProjects';
+import type { Template } from './constants/templates';
+import type { SectionId } from './types/app';
 
 export default function App() {
-  const [tool, setTool] = useState<Tool>(DEFAULT_TOOL);
-  const camera = useViewport();
-  const {
-    shapes,
-    selectedId,
-    draft,
-    updateShape,
-    removeShape,
-    select,
-    drawStart,
-    drawUpdate,
-    drawEnd,
-    drawCancel,
-    dragStart,
-    dragMove,
-    dragEnd,
-    addImage,
-  } = useShapes(STARTER_SHAPES);
+  const [entered, setEntered] = useState(false);
+  const [section, setSection] = useState<SectionId>('works');
+  const { cursorId, setCursorId } = useCursor();
+  const projects = useProjects();
 
-  const [generating, setGenerating] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-
-  useHotkeys({
-    onSelectTool: (t) => setTool(t),
-    onDelete: () => {
-      if (selectedId) removeShape(selectedId);
+  const useTemplate = useCallback(
+    (template: Template) => {
+      projects.createProject(template.name, buildTemplate(template));
+      setSection('works');
     },
-  });
+    [projects],
+  );
 
-  const handleGenerate = async (rawPrompt: string) => {
-    const trimmed = rawPrompt.trim();
-    if (!trimmed) return;
-    setGenerating(true);
-    setAiError(null);
-    try {
-      let prompt = hasCyrillic(trimmed) ? await translateToEnglish(trimmed) : trimmed;
-      if (!prompt.trim()) prompt = trimmed;
-      const src = buildImageUrl(prompt);
-      await preloadImage(src);
-      addImage(src);
-    } catch {
-      setAiError('Could not generate the image. Try again.');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const selectedShape = selectedId ? shapes.find((shape) => shape.id === selectedId) ?? null : null;
-
-  const handleUpdate = (patch: Partial<Omit<Shape, 'id'>>) => {
-    if (selectedId) updateShape(selectedId, patch);
-  };
+  const addCatToCanvas = useCallback(
+    (src: string) => {
+      projects.addImageToProject(projects.activeId, src);
+      setSection('works');
+    },
+    [projects],
+  );
 
   return (
-    <div className="flex h-full w-full bg-[#0d0f14] text-zinc-100">
-      <Toolbar activeTool={tool} onSelectTool={setTool} onGenerate={handleGenerate} generating={generating} error={aiError} />
-      <Canvas
-        camera={camera}
-        tool={tool}
-        shapes={shapes}
-        selectedId={selectedId}
-        draft={draft}
-        onSelect={select}
-        onDrawStart={drawStart}
-        onDrawUpdate={drawUpdate}
-        onDrawEnd={drawEnd}
-        onDrawCancel={drawCancel}
-        onDragStart={dragStart}
-        onDragMove={dragMove}
-        onDragEnd={dragEnd}
-      />
-      <div className="flex h-full w-64 flex-col overflow-hidden border-l border-zinc-800 bg-[#14161c]">
-        <PropertiesPanel shape={selectedShape} onUpdate={handleUpdate} />
-        <LayersPanel shapes={shapes} selectedId={selectedId} onSelect={select} />
-      </div>
+    <div className="app-shell flex h-full w-full flex-col bg-app text-zinc-100">
+      {entered ? (
+        <>
+          <TopNav section={section} onSelect={setSection} onHome={() => setEntered(false)} />
+          <main className="min-h-0 flex-1 overflow-hidden">
+            {section === 'works' && <WorksSection projects={projects} />}
+            {section === 'proposals' && <ProposalsSection onUse={useTemplate} />}
+            {section === 'cats' && <CatsSection onAdd={addCatToCanvas} />}
+            {section === 'cursor' && <CursorSection cursorId={cursorId} onSelect={setCursorId} />}
+          </main>
+        </>
+      ) : (
+        <main className="min-h-0 flex-1 overflow-hidden">
+          <Landing onEnter={() => setEntered(true)} />
+        </main>
+      )}
     </div>
   );
 }

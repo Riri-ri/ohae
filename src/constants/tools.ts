@@ -23,3 +23,7 @@ export const DEFAULT_TOOL: Tool = 'select';
 export const DEFAULT_FILL = '#4da3ff';
 
 export const DEFAULT_SHAPE_SIZE = 120;
+
+export const IMAGE_SIZE = 256;
+export const IMAGE_CASCADE_STEP = 24;
+export const IMAGE_CASCADE_STEPS = 4;

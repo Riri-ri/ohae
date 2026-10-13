@@ -11,7 +11,7 @@ export function LayersPanel({ shapes, selectedId, onSelect }: LayersPanelProps) 
   const topFirst = [...shapes].reverse();
 
   return (
-    <aside className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
+    <aside aria-label="Слои" className="flex flex-1 flex-col gap-1 overflow-y-auto p-3">
       <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
         Layers
       </div>

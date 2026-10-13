@@ -1,5 +1,20 @@
 @import 'tailwindcss';
 
+/* Единая палитра поверхностей: вместо россыпи hex по компонентам. */
+@theme {
+  --color-app: #0d0f14;
+  --color-surface: #14161c;
+  --color-surface-2: #1a1d24;
+  --color-canvas: #1c1f26;
+  --color-rail: #12141a;
+  --color-preview: #0f1220;
+  --color-accent: #4da3ff;
+}
+
+:root {
+  --app-cursor: default;
+}
+
 html,
 body,
 #root {
@@ -18,4 +33,36 @@ body {
     'Helvetica Neue',
     Arial,
     sans-serif;
+}
+
+/* Единый курсор приложения. Функциональные курсоры редактора заданы
+   инлайн-стилями и перекрывают это правило. */
+.app-shell {
+  cursor: var(--app-cursor);
+}
+
+.app-shell button:not(:disabled),
+.app-shell [role='button'],
+.app-shell a,
+.app-shell label,
+.app-shell input,
+.app-shell select,
+.app-shell summary {
+  cursor: var(--app-cursor);
+}
+
+.app-shell ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.app-shell ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: padding-box;
+  background-color: rgba(113, 113, 122, 0.45);
+}
+
+.app-shell ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(113, 113, 122, 0.7);
 }

@@ -1,31 +1,39 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
+import type { PointerEvent as ReactPointerEvent, RefObject } from 'react';
 import type { Point } from '../types/shape';
 import { clampZoom, screenToCanvas } from '../utils/geometry';
 import type { Viewport } from '../utils/geometry';
+import { isInteractiveTarget } from '../utils/dom';
+import { loadViewport, saveViewport, scheduleSave } from '../utils/storage';
 
 const WHEEL_ZOOM_SENSITIVITY = 0.002;
 
 export interface Camera {
   viewport: Viewport;
   isSpaceDown: boolean;
+  isRestored: boolean;
   centerOn: (center: Point) => void;
   panBy: (dx: number, dy: number) => void;
-  zoomAt: (point: Point, factor: number) => void;
   panHandlers: {
     onPointerDown: (e: ReactPointerEvent<HTMLElement>) => void;
     onPointerMove: (e: ReactPointerEvent<HTMLElement>) => void;
     onPointerUp: (e: ReactPointerEvent<HTMLElement>) => void;
+    onPointerCancel: (e: ReactPointerEvent<HTMLElement>) => void;
   };
 }
 
-export function useViewport(): Camera {
-  const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, zoom: 1 });
+export function useViewport(containerRef: RefObject<HTMLDivElement | null>, viewportKey: string): Camera {
+  const [restored] = useState(() => loadViewport(viewportKey));
+  const [viewport, setViewport] = useState<Viewport>(() => restored ?? { x: 0, y: 0, zoom: 1 });
   const [isSpaceDown, setIsSpaceDown] = useState(false);
 
   const spaceRef = useRef(false);
   const panningRef = useRef(false);
   const lastPointerRef = useRef<Point>({ x: 0, y: 0 });
+
+  useEffect(() => {
+    scheduleSave(viewportKey, () => saveViewport(viewportKey, viewport));
+  }, [viewportKey, viewport]);
 
   const centerOn = useCallback((center: Point) => {
     setViewport((v) => ({ ...v, x: center.x, y: center.y }));
@@ -35,14 +43,14 @@ export function useViewport(): Camera {
     setViewport((v) => ({ ...v, x: v.x + dx, y: v.y + dy }));
   }, []);
 
-  const zoomAt = useCallback((point: Point, factor: number) => {
+  const zoomAt = useCallback((localPoint: Point, factor: number) => {
     setViewport((v) => {
       const zoom = clampZoom(v.zoom * factor);
-      const canvas = screenToCanvas(point, v);
+      const canvas = screenToCanvas(localPoint, v);
       return {
         zoom,
-        x: point.x - canvas.x * zoom,
-        y: point.y - canvas.y * zoom,
+        x: localPoint.x - canvas.x * zoom,
+        y: localPoint.y - canvas.y * zoom,
       };
     });
   }, []);
@@ -50,6 +58,7 @@ export function useViewport(): Camera {
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.code !== 'Space' || e.repeat) return;
+      if (isInteractiveTarget(e.target)) return;
       e.preventDefault();
       spaceRef.current = true;
       setIsSpaceDown(true);
@@ -77,17 +86,23 @@ export function useViewport(): Camera {
   }, []);
 
   useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
     const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey) return;
       e.preventDefault();
-      const factor = Math.exp(-e.deltaY * WHEEL_ZOOM_SENSITIVITY);
-      zoomAt({ x: e.clientX, y: e.clientY }, factor);
+      const rect = el.getBoundingClientRect();
+      zoomAt(
+        { x: e.clientX - rect.left, y: e.clientY - rect.top },
+        Math.exp(-e.deltaY * WHEEL_ZOOM_SENSITIVITY),
+      );
     };
-    window.addEventListener('wheel', onWheel, { passive: false });
-    return () => window.removeEventListener('wheel', onWheel);
-  }, [zoomAt]);
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [containerRef, zoomAt]);
 
   const onPointerDown = useCallback((e: ReactPointerEvent<HTMLElement>) => {
-    if (!spaceRef.current) return;
+    if (!spaceRef.current || e.button !== 0) return;
     panningRef.current = true;
     lastPointerRef.current = { x: e.clientX, y: e.clientY };
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -108,12 +123,16 @@ export function useViewport(): Camera {
     panningRef.current = false;
   }, []);
 
+  const onPointerCancel = useCallback((_e: ReactPointerEvent<HTMLElement>) => {
+    panningRef.current = false;
+  }, []);
+
   return {
     viewport,
     isSpaceDown,
+    isRestored: restored !== null,
     centerOn,
     panBy,
-    zoomAt,
-    panHandlers: { onPointerDown, onPointerMove, onPointerUp },
+    panHandlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel },
   };
 }

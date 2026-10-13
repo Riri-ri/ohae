@@ -41,13 +41,18 @@ export function Toolbar({ activeTool, onSelectTool, onGenerate, generating, erro
   };
 
   return (
-    <aside className="relative flex w-14 flex-col items-center gap-2 border-r border-zinc-800 bg-[#14161c] py-3">
+    <aside
+      aria-label="Панель инструментов"
+      className="relative flex w-14 flex-col items-center gap-2 border-r border-zinc-800 bg-surface py-3"
+    >
       {TOOLS.map((tool) => {
         const active = tool.id === activeTool;
         return (
           <button
             key={tool.id}
             type="button"
+            aria-label={`${tool.label} (${tool.hotkey})`}
+            aria-pressed={active}
             title={`${tool.label} (${tool.hotkey})`}
             className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
               active
@@ -65,6 +70,8 @@ export function Toolbar({ activeTool, onSelectTool, onGenerate, generating, erro
 
       <button
         type="button"
+        aria-label="Сгенерировать картинку"
+        aria-expanded={open}
         title="AI image"
         className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
           open
@@ -82,7 +89,7 @@ export function Toolbar({ activeTool, onSelectTool, onGenerate, generating, erro
       {open && (
         <form
           onSubmit={handleSubmit}
-          className="absolute left-14 top-3 z-10 flex w-80 flex-col gap-2 rounded-lg border border-zinc-800 bg-[#1a1d24] p-3 shadow-xl"
+          className="absolute left-14 top-3 z-10 flex w-80 flex-col gap-2 rounded-lg border border-zinc-800 bg-surface-2 p-3 shadow-xl"
         >
           <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
             AI image
@@ -92,7 +99,7 @@ export function Toolbar({ activeTool, onSelectTool, onGenerate, generating, erro
             type="text"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe the image…"
+            placeholder="Describe the image..."
             className="w-full rounded-md border border-zinc-700 bg-zinc-800/60 px-2 py-1.5 text-xs text-zinc-100 placeholder-zinc-500 outline-none focus:border-blue-500"
           />
           <button
@@ -100,8 +107,11 @@ export function Toolbar({ activeTool, onSelectTool, onGenerate, generating, erro
             disabled={generating || !prompt.trim()}
             className="rounded-md bg-blue-500 px-2 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-600 disabled:opacity-50"
           >
-            {generating ? 'Generating…' : 'Generate'}
+            {generating ? 'Generating...' : 'Generate'}
           </button>
+          <p className="text-[10px] leading-snug text-zinc-500">
+            Промпт и перевод уходят на сторонние сервисы: pollinations.ai и mymemory.translated.net.
+          </p>
           {error && <p className="text-xs text-red-400">{error}</p>}
         </form>
       )}

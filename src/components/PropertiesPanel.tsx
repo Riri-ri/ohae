@@ -17,7 +17,10 @@ function Field({ label, value }: { label: string; value: string }) {
 
 export function PropertiesPanel({ shape, onUpdate }: PropertiesPanelProps) {
   return (
-    <aside className="flex flex-col gap-2 overflow-y-auto border-b border-zinc-800 p-3">
+    <aside
+      aria-label="Свойства фигуры"
+      className="flex flex-col gap-2 overflow-y-auto border-b border-zinc-800 p-3"
+    >
       <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">
         Design
       </div>

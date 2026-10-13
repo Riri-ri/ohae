@@ -3,14 +3,11 @@ export interface Point {
   y: number;
 }
 
-export interface Size {
-  width: number;
-  height: number;
-}
-
 export type ShapeKind = 'rectangle' | 'ellipse' | 'image';
 
 export type Tool = 'select' | 'rectangle' | 'ellipse';
+
+export type ResizeHandle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
 
 export interface Shape {
   id: string;

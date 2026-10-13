@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import type { PointerEvent as ReactPointerEvent } from 'react';
-import type { Point, Shape as ShapeModel, ShapeKind, Tool } from '../types/shape';
+import type { PointerEvent as ReactPointerEvent, RefObject } from 'react';
+import type { Point, ResizeHandle, Shape as ShapeModel, ShapeKind, Tool } from '../types/shape';
 import type { Camera } from '../hooks/useViewport';
 import type { Viewport } from '../utils/geometry';
 import { Shape } from './Shape';
@@ -8,6 +8,7 @@ import { Shape } from './Shape';
 const GRID_SIZE = 24;
 
 interface CanvasProps {
+  containerRef: RefObject<HTMLDivElement | null>;
   camera: Camera;
   tool: Tool;
   shapes: ShapeModel[];
@@ -21,9 +22,13 @@ interface CanvasProps {
   onDragStart: (id: string, point: Point, viewport: Viewport) => void;
   onDragMove: (point: Point, viewport: Viewport) => void;
   onDragEnd: () => void;
+  onScaleStart: (id: string, handle: ResizeHandle) => void;
+  onScaleMove: (point: Point, viewport: Viewport) => void;
+  onScaleEnd: () => void;
 }
 
 export function Canvas({
+  containerRef,
   camera,
   tool,
   shapes,
@@ -37,17 +42,31 @@ export function Canvas({
   onDragStart,
   onDragMove,
   onDragEnd,
+  onScaleStart,
+  onScaleMove,
+  onScaleEnd,
 }: CanvasProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const drawingRef = useRef(false);
 
   const isShapeTool = tool === 'rectangle' || tool === 'ellipse';
+  const shapesInteractive = tool === 'select' && !camera.isSpaceDown;
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    camera.centerOn({ x: el.clientWidth / 2, y: el.clientHeight / 2 });
-  }, [camera.centerOn]);
+    if (!camera.isRestored) {
+      camera.centerOn({ x: el.clientWidth / 2, y: el.clientHeight / 2 });
+    }
+
+    let size = { width: el.clientWidth, height: el.clientHeight };
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      camera.panBy((width - size.width) / 2, (height - size.height) / 2);
+      size = { width, height };
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [camera.isRestored, camera.centerOn, camera.panBy]);
 
   const toLocalPoint = (e: ReactPointerEvent<HTMLElement>): Point => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -56,6 +75,7 @@ export function Canvas({
   };
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
     camera.panHandlers.onPointerDown(e);
     if (camera.isSpaceDown) return;
     if (isShapeTool) {
@@ -82,19 +102,32 @@ export function Canvas({
     }
   };
 
-  const handlePointerCancel = () => {
+  const handlePointerCancel = (e: ReactPointerEvent<HTMLDivElement>) => {
     drawingRef.current = false;
+    camera.panHandlers.onPointerUp(e);
     onDrawCancel();
   };
 
   const gridSize = GRID_SIZE * camera.viewport.zoom;
 
+  const shapeHandlers = {
+    onSelect,
+    onDragStart,
+    onDragMove,
+    onDragEnd,
+    onScaleStart,
+    onScaleMove,
+    onScaleEnd,
+    toLocalPoint,
+  };
+
   return (
     <div
       ref={containerRef}
-      className="relative flex-1 overflow-hidden bg-[#1c1f26]"
-      style={{ cursor: camera.isSpaceDown ? 'grab' : 'default' }}
-      data-tool={tool}
+      className="relative flex-1 overflow-hidden bg-canvas"
+      style={{
+        cursor: camera.isSpaceDown ? 'grab' : isShapeTool ? 'crosshair' : 'default',
+      }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -104,7 +137,7 @@ export function Canvas({
         className="absolute inset-0"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(77, 163, 255, 0.14) 1px, transparent 1px), linear-gradient(90deg, rgba(77, 163, 255, 0.14) 1px, transparent 1px)',
+            'linear-gradient(color-mix(in srgb, var(--color-accent) 14%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--color-accent) 14%, transparent) 1px, transparent 1px)',
           backgroundSize: `${gridSize}px ${gridSize}px`,
           backgroundPosition: `${camera.viewport.x}px ${camera.viewport.y}px`,
         }}
@@ -115,12 +148,8 @@ export function Canvas({
           shape={shape}
           viewport={camera.viewport}
           selected={shape.id === selectedId}
-          draggable={!camera.isSpaceDown}
-          onSelect={onSelect}
-          onDragStart={onDragStart}
-          onDragMove={onDragMove}
-          onDragEnd={onDragEnd}
-          toLocalPoint={toLocalPoint}
+          interactive={shapesInteractive}
+          {...shapeHandlers}
         />
       ))}
       {draft && (
@@ -128,12 +157,8 @@ export function Canvas({
           shape={draft}
           viewport={camera.viewport}
           selected={false}
-          draggable={false}
-          onSelect={onSelect}
-          onDragStart={onDragStart}
-          onDragMove={onDragMove}
-          onDragEnd={onDragEnd}
-          toLocalPoint={toLocalPoint}
+          interactive={false}
+          {...shapeHandlers}
         />
       )}
     </div>
